@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { generateContent } from "@/lib/ai";
+import ExportMenu from "./ExportMenu";
+import ApiErrorFallback from "./ApiErrorFallback";
 
 interface ToolPageProps {
   title: string;
@@ -124,9 +126,7 @@ export default function ToolPage({
             )}
           </button>
           {error && (
-            <p className="text-sm text-red-400 bg-red-400/10 rounded-lg px-4 py-2">
-              {error}
-            </p>
+            <ApiErrorFallback error={error} onRetry={handleGenerate} />
           )}
         </div>
 
@@ -137,26 +137,29 @@ export default function ToolPage({
               Generated Output
             </label>
             {output && (
-              <button
-                onClick={handleCopy}
-                className="text-xs text-accent hover:text-accent-light transition-colors flex items-center gap-1"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopy}
+                  className="text-xs text-accent hover:text-accent-light transition-colors flex items-center gap-1"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-                  />
-                </svg>
-                {copied ? "Copied!" : "Copy"}
-              </button>
+                  <svg
+                    width="14"
+                    height="14"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+                    />
+                  </svg>
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+                <ExportMenu content={output} title={title} />
+              </div>
             )}
           </div>
           <div className="w-full h-[500px] bg-bg-card border border-border rounded-xl p-4 overflow-y-auto">
