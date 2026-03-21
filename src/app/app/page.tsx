@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import OnboardingTour from "@/components/OnboardingTour";
 
 const tools = [
   {
@@ -48,6 +51,7 @@ const tools = [
 export default function Dashboard() {
   return (
     <div className="animate-fade-in">
+      <OnboardingTour />
       {/* Header */}
       <div className="mb-16">
         <div className="flex items-center gap-4 mb-4">

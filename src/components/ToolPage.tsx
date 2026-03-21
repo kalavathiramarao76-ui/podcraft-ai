@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { generateContent } from "@/lib/ai";
 import ExportMenu from "./ExportMenu";
+import FavoriteButton from "./FavoriteButton";
 import ApiErrorFallback from "./ApiErrorFallback";
 
 interface ToolPageProps {
@@ -138,6 +139,7 @@ export default function ToolPage({
             </label>
             {output && (
               <div className="flex items-center gap-2">
+                <FavoriteButton itemId={`podcraft-${title.toLowerCase().replace(/\s+/g, "-")}`} itemLabel={title} size="sm" />
                 <button
                   onClick={handleCopy}
                   className="text-xs text-accent hover:text-accent-light transition-colors flex items-center gap-1"
