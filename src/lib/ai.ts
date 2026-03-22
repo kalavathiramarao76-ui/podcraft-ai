@@ -1,5 +1,3 @@
-import { incrementUsage } from "./usage";
-
 export async function generateContent(
   systemPrompt: string,
   userPrompt: string
@@ -10,13 +8,20 @@ export async function generateContent(
     body: JSON.stringify({ systemPrompt, userPrompt }),
   });
 
+  if (res.status === 429) {
+    const errorData = await res.json();
+    if (errorData.error === "FREE_LIMIT_REACHED") {
+      window.dispatchEvent(new CustomEvent("usage-changed", { detail: errorData.count }));
+      throw new Error("FREE_LIMIT_REACHED");
+    }
+  }
+
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err.error || "Generation failed");
   }
 
   const data = await res.json();
-  incrementUsage();
   return data.content;
 }
 
