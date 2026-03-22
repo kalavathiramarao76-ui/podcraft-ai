@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
+import { AuthGate } from "@/components/AuthGate";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -86,7 +87,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <AuthGate><ToastProvider>{children}</ToastProvider></AuthGate>
       </body>
     </html>
   );

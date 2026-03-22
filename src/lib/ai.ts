@@ -1,3 +1,5 @@
+import { incrementUsage } from "./usage";
+
 export async function generateContent(
   systemPrompt: string,
   userPrompt: string
@@ -14,6 +16,7 @@ export async function generateContent(
   }
 
   const data = await res.json();
+  incrementUsage();
   return data.content;
 }
 

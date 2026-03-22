@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
+import { UserMenu } from "./AuthGate";
 
 const navItems = [
   { href: "/app", label: "Dashboard", icon: "grid" },
@@ -102,6 +103,7 @@ export default function Navbar() {
       </div>
 
       <div className="p-4 border-t border-border space-y-3">
+        <UserMenu />
         <ThemeToggle />
         <div className="text-xs text-muted">
           PodCraft AI v1.0
