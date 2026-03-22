@@ -1,4 +1,134 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+// ── Reduced motion check ─────────────────────────────────────────────
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
+
+// ── Letter-by-letter hero reveal ─────────────────────────────────────
+function LetterReveal({ text, className = "", stagger = 30, delay = 0 }: { text: string; className?: string; stagger?: number; delay?: number }) {
+  const reduced = usePrefersReducedMotion();
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setVisible(true), delay);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [delay]);
+
+  if (reduced) return <span className={className}>{text}</span>;
+
+  return (
+    <span ref={ref} className={className} aria-label={text}>
+      {text.split("").map((char, i) => (
+        <span
+          key={i}
+          className="letter-reveal-char"
+          style={{
+            transitionDelay: visible ? `${i * stagger}ms` : "0ms",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(0.3em)",
+          }}
+          aria-hidden="true"
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// ── Stats counter animation ──────────────────────────────────────────
+function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  const reduced = usePrefersReducedMotion();
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStarted(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started || reduced) {
+      if (started) setCount(value);
+      return;
+    }
+    let frame: number;
+    const duration = 800;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * value));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [started, value, reduced]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+// ── Scroll fade-up via IntersectionObserver ───────────────────────────
+function FadeUp({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("is-visible");
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`fade-up-section ${className}`} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
 
 const features = [
   {
@@ -69,15 +199,26 @@ export default function LandingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-5xl mx-auto text-center relative">
+          {/* Waveform animation */}
+          <div className="flex items-center justify-center gap-[3px] mb-8" aria-hidden="true">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <span
+                key={i}
+                className="waveform-bar"
+                style={{ animationDelay: `${i * 80}ms` }}
+              />
+            ))}
+          </div>
+
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-bg-card text-xs text-muted mb-8 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             AI-powered podcast repurposing
           </div>
 
-          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.95] animate-fade-in">
-            Turn one episode
+          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.95]">
+            <LetterReveal text="Turn one episode" stagger={30} />
             <br />
-            <span className="gradient-text">into ten pieces.</span>
+            <span className="gradient-text"><LetterReveal text="into ten pieces." stagger={30} delay={500} /></span>
           </h1>
 
           <p className="mt-8 text-lg sm:text-xl text-muted max-w-2xl mx-auto leading-relaxed animate-fade-in-delay">
@@ -103,16 +244,18 @@ export default function LandingPage() {
 
           {/* Stats */}
           <div className="mt-20 grid grid-cols-3 gap-8 max-w-lg mx-auto animate-fade-in-delay-2">
-            {[
-              ["7", "AI Tools"],
-              ["1", "Transcript"],
-              ["10+", "Content Pieces"],
-            ].map(([num, label]) => (
-              <div key={label}>
-                <div className="text-3xl font-bold gradient-text">{num}</div>
-                <div className="text-sm text-muted mt-1">{label}</div>
-              </div>
-            ))}
+            <div>
+              <div className="text-3xl font-bold gradient-text"><AnimatedCounter value={7} /></div>
+              <div className="text-sm text-muted mt-1">AI Tools</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold gradient-text"><AnimatedCounter value={1} /></div>
+              <div className="text-sm text-muted mt-1">Transcript</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold gradient-text"><AnimatedCounter value={10} suffix="+" /></div>
+              <div className="text-sm text-muted mt-1">Content Pieces</div>
+            </div>
           </div>
         </div>
       </section>
@@ -132,29 +275,28 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((f, i) => (
-              <div
-                key={i}
-                className="card-hover p-6 rounded-2xl border border-border bg-bg-card group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="#8b5cf6"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d={f.icon}
-                    />
-                  </svg>
+              <FadeUp key={i} delay={i * 80}>
+                <div className="card-hover p-6 rounded-2xl border border-border bg-bg-card group">
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                    <svg
+                      width="20"
+                      height="20"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="#8b5cf6"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d={f.icon}
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-base mb-1">{f.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{f.desc}</p>
                 </div>
-                <h3 className="font-semibold text-base mb-1">{f.title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{f.desc}</p>
-              </div>
+              </FadeUp>
             ))}
           </div>
         </div>

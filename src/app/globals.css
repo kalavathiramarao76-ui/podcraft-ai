@@ -103,6 +103,66 @@ input:focus {
   background-clip: text;
 }
 
+/* ── Letter-by-letter reveal ── */
+.letter-reveal-char {
+  display: inline-block;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+/* ── Scroll fade-up sections ── */
+.fade-up-section {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fade-up-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Waveform animation (audio/podcast theme) ── */
+@keyframes waveform {
+  0%, 100% { height: 4px; }
+  50% { height: 24px; }
+}
+
+.waveform-bar {
+  display: inline-block;
+  width: 3px;
+  height: 4px;
+  background: linear-gradient(to top, #8b5cf6, #a78bfa);
+  border-radius: 2px;
+  animation: waveform 1.2s ease-in-out infinite;
+  will-change: height;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .letter-reveal-char {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .fade-up-section {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .waveform-bar {
+    animation: none !important;
+    height: 12px !important;
+  }
+  .animate-fade-in,
+  .animate-fade-in-delay,
+  .animate-fade-in-delay-2,
+  .pulse-glow {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* Card hover */
 .card-hover {
   transition: all 0.3s ease;
