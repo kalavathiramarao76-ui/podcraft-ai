@@ -5,6 +5,7 @@ import { generateContent } from "@/lib/ai";
 import ExportMenu from "./ExportMenu";
 import FavoriteButton from "./FavoriteButton";
 import ApiErrorFallback from "./ApiErrorFallback";
+import { useToast } from "./ToastProvider";
 
 interface ToolPageProps {
   title: string;
@@ -28,6 +29,7 @@ export default function ToolPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const { addToast } = useToast();
 
   const handleGenerate = useCallback(async () => {
     if (!transcript.trim()) {
@@ -49,18 +51,22 @@ export default function ToolPage({
         buildUserPrompt(transcript)
       );
       setOutput(result);
+      addToast({ title: `${title} generated`, variant: "success" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      setError(msg);
+      addToast({ title: "Generation failed", description: msg, variant: "error" });
     } finally {
       setLoading(false);
     }
-  }, [transcript, systemPrompt, buildUserPrompt]);
+  }, [transcript, systemPrompt, buildUserPrompt, addToast, title]);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(output);
     setCopied(true);
+    addToast({ title: "Copied to clipboard", variant: "info" });
     setTimeout(() => setCopied(false), 2000);
-  }, [output]);
+  }, [output, addToast]);
 
   return (
     <div className="animate-fade-in">
@@ -92,11 +98,13 @@ export default function ToolPage({
               setError("");
             }}
             placeholder={placeholder}
+            aria-label="Podcast transcript input"
             className="w-full h-[500px] bg-bg-card border border-border rounded-xl p-4 text-sm text-zinc-300 resize-none focus:border-accent/50 transition-colors placeholder:text-zinc-700"
           />
           <button
             onClick={handleGenerate}
             disabled={loading}
+            aria-label={loading ? "Generating content" : `Generate ${title}`}
             className="w-full py-3 px-6 bg-accent hover:bg-accent-dark text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed pulse-glow"
           >
             {loading ? (
@@ -142,6 +150,7 @@ export default function ToolPage({
                 <FavoriteButton itemId={`podcraft-${title.toLowerCase().replace(/\s+/g, "-")}`} itemLabel={title} size="sm" />
                 <button
                   onClick={handleCopy}
+                  aria-label="Copy generated output to clipboard"
                   className="text-xs text-accent hover:text-accent-light transition-colors flex items-center gap-1"
                 >
                   <svg
